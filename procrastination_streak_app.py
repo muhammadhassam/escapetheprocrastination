@@ -1,5 +1,6 @@
 import os
 import streamlit as st
+import pyrebase
 
 # Ensure setuptools is installed
 try:
@@ -15,7 +16,7 @@ except ModuleNotFoundError:
     os.system("pip install pyrebase4")
     import pyrebase  # Retry import after installation
 
-
+# Firebase Configuration
 firebase_config = {
     "apiKey": "AIzaSyBk4LNNe01m35jCVWNsFcLMde51XykSGKM",
     "authDomain": "escape-procrastination.firebaseapp.com",
@@ -23,52 +24,68 @@ firebase_config = {
     "projectId": "escape-procrastination",
     "storageBucket": "escape-procrastination.appspot.com",
     "messagingSenderId": "687402348295",
-    "appId": "1:687402348295:web:da4602785acf1cb2a59fa2"  # Replace with actual App ID from Firebase
+    "appId": "1:687402348295:web:da4602785acf1cb2a59fa2"
 }
-
 
 # Initialize Firebase
 firebase = pyrebase.initialize_app(firebase_config)
 auth = firebase.auth()
 db = firebase.database()
 
-# Streamlit UI
-st.title("🔥 Escape the Procrastination - Login")
+# Streamlit Page Configuration
+st.set_page_config(page_title="Escape Procrastination", page_icon="🔥", layout="wide")
 
-# Login/Register Toggle
-choice = st.selectbox("Login or Sign Up", ["Login", "Sign Up"])
+# Sidebar Login/Sign Up
+if "user" not in st.session_state:
+    st.sidebar.title("🔑 Login / Sign Up")
+    choice = st.sidebar.radio("Select an option", ["Login", "Sign Up"])
+    
+    email = st.sidebar.text_input("📧 Email", key="email_input")
+    password = st.sidebar.text_input("🔑 Password", type="password", key="password_input")
 
-email = st.text_input("Email")
-password = st.text_input("Password", type="password")
+    if choice == "Login":
+        if st.sidebar.button("Login", use_container_width=True):
+            try:
+                user = auth.sign_in_with_email_and_password(email, password)
+                st.session_state["user"] = user
+                st.session_state["user_id"] = user["localId"]
+                st.sidebar.success("✅ Logged in successfully!")
+                st.experimental_rerun()
+            except Exception as e:
+                st.sidebar.error("Invalid credentials. Try again.")
 
-if choice == "Sign Up":
-    if st.button("Create Account"):
-        try:
-            user = auth.create_user_with_email_and_password(email, password)
-            st.success("✅ Account created! Please log in.")
-        except Exception as e:
-            st.error(f"Error: {e}")
+    elif choice == "Sign Up":
+        if st.sidebar.button("Sign Up", use_container_width=True):
+            try:
+                auth.create_user_with_email_and_password(email, password)
+                st.sidebar.success("✅ Account created! Please log in.")
+            except Exception as e:
+                st.sidebar.error(f"Error: {e}")
 
-if choice == "Login":
-    if st.button("Login"):
-        try:
-            user = auth.sign_in_with_email_and_password(email, password)
-            st.session_state["user"] = user
-            st.success("✅ Logged in successfully! 🚀")
-        except Exception as e:
-            st.error("Invalid credentials. Try again.")
+else:
+    # Logout Option
+    st.sidebar.write(f"👋 Welcome, {st.session_state['user']['email']}")
+    if st.sidebar.button("Logout", use_container_width=True):
+        st.session_state.pop("user")
+        st.session_state.pop("user_id")
+        st.experimental_rerun()
 
-# Show streak tracking after login
+# Main Content - Streak Tracking
 if "user" in st.session_state:
-    st.write(f"Welcome, {st.session_state['user']['email']}!")
+    st.title("🔥 Escape the Procrastination - Streak Progress")
 
     # Retrieve or Initialize User Streak Data
     user_id = st.session_state["user"]["localId"]
-    st.write(f"User ID: {user_id}")  # Debugging line to check if the user ID is correct
     user_data = db.child("streaks").child(user_id).get().val()
 
     if not user_data:
-        user_data = {"streak_day_1": 0, "streak_day_2": 0, "streak_day_3": 0, "streak_day_4": 0, "streak_day_5": 0}
+        user_data = {
+            "streak_day_1": 0,
+            "streak_day_2": 0,
+            "streak_day_3": 0,
+            "streak_day_4": 0,
+            "streak_day_5": 0
+        }
         db.child("streaks").child(user_id).set(user_data)
 
     # Display Checkboxes for Streak
@@ -102,3 +119,4 @@ if "user" in st.session_state:
         st.info(f"Keep going! You're {completed_tasks}/5 days into the challenge! 💪")
     else:
         st.warning("Let's get started! Check off your first task today! 🔥")
+
