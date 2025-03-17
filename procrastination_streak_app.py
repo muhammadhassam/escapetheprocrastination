@@ -1,39 +1,88 @@
 import streamlit as st
+import pyrebase
 
-# App Title
-st.title("🔥 5-Day Procrastination Streak Challenge")
-
-# Description
-st.write("Welcome to the **5-Day Procrastination Streak Challenge!** 🚀 Track your progress, stay accountable, and build momentum.")
-
-# Task List
-tasks = {
-    "🔥 Day 1": "⏳ Pick a procrastinated task & work on it for 5 minutes",
-    "📅 Day 2": "📝 Write tomorrow’s to-do list & highlight 3 key tasks",
-    "⏳ Day 3": "⏲️ Use the Pomodoro method (25 min focus, 5 min break)",
-    "🐸 Day 4": "🐸 Start with your hardest task first, no avoiding it",
-    "🎯 Day 5": "🔍 Look back—what worked? What didn’t?"
+# Firebase Configuration
+firebase_config = {
+    "apiKey": "YOUR_FIREBASE_API_KEY",
+    "authDomain": "YOUR_PROJECT_ID.firebaseapp.com",
+    "databaseURL": "https://YOUR_PROJECT_ID.firebaseio.com",
+    "projectId": "YOUR_PROJECT_ID",
+    "storageBucket": "YOUR_PROJECT_ID.appspot.com",
+    "messagingSenderId": "YOUR_MESSAGING_SENDER_ID",
+    "appId": "YOUR_APP_ID"
 }
 
-# Streak Progress
-st.subheader("✅ Track Your Streak Progress")
+# Initialize Firebase
+firebase = pyrebase.initialize_app(firebase_config)
+auth = firebase.auth()
+db = firebase.database()
 
-# Checkbox for each task
-streak_status = {}
-for day, task in tasks.items():
-    streak_status[day] = st.checkbox(f"{day}: {task}")
+# Streamlit UI
+st.title("🔥 Escape the Procrastination - Login")
 
-# Show progress
-completed_tasks = sum(streak_status.values())
-st.progress(completed_tasks / len(tasks))
+# Login/Register Toggle
+choice = st.selectbox("Login or Sign Up", ["Login", "Sign Up"])
 
-# Motivation Message
-if completed_tasks == len(tasks):
-    st.success("🎉 Congratulations! You completed the 5-Day Streak Challenge! 🚀")
-elif completed_tasks > 0:
-    st.info(f"Keep going! You're {completed_tasks}/5 days into the challenge! 💪")
-else:
-    st.warning("Let's get started! Check off your first task today! 🔥")
+email = st.text_input("Email")
+password = st.text_input("Password", type="password")
 
-# Footer
-st.write("Made with ❤️ for productivity. Let's beat procrastination together!")
+if choice == "Sign Up":
+    if st.button("Create Account"):
+        try:
+            user = auth.create_user_with_email_and_password(email, password)
+            st.success("✅ Account created! Please log in.")
+        except Exception as e:
+            st.error(f"Error: {e}")
+
+if choice == "Login":
+    if st.button("Login"):
+        try:
+            user = auth.sign_in_with_email_and_password(email, password)
+            st.session_state["user"] = user
+            st.success("✅ Logged in successfully! 🚀")
+        except Exception as e:
+            st.error("Invalid credentials. Try again.")
+
+# Show streak tracking after login
+if "user" in st.session_state:
+    st.write(f"Welcome, {st.session_state['user']['email']}!")
+
+    # Retrieve or Initialize User Streak Data
+    user_id = st.session_state["user"]["localId"]
+    user_data = db.child("streaks").child(user_id).get().val()
+
+    if not user_data:
+        user_data = {"streak_day_1": 0, "streak_day_2": 0, "streak_day_3": 0, "streak_day_4": 0, "streak_day_5": 0}
+        db.child("streaks").child(user_id).set(user_data)
+
+    # Display Checkboxes for Streak
+    st.subheader("✅ Track Your Streak Progress")
+    tasks = [
+        "🔥 Day 1: 5-Minute Start",
+        "📅 Day 2: Prioritize 3 Tasks",
+        "⏳ Day 3: Pomodoro Sprint",
+        "🐸 Day 4: Eat the Frog",
+        "🎯 Day 5: Full Productivity"
+    ]
+
+    streak_status = {}
+    for i, task in enumerate(tasks, start=1):
+        streak_status[f"streak_day_{i}"] = st.checkbox(task, user_data[f"streak_day_{i}"])
+
+    # Save Progress Button
+    if st.button("Save Progress"):
+        for i in range(1, 6):
+            user_data[f"streak_day_{i}"] = int(streak_status[f"streak_day_{i}"])
+        db.child("streaks").child(user_id).update(user_data)
+        st.success("✅ Progress saved!")
+
+    # Show Current Progress
+    completed_tasks = sum(user_data[f"streak_day_{i}"] for i in range(1, 6))
+    st.progress(completed_tasks / 5)
+
+    if completed_tasks == 5:
+        st.success("🎉 Congratulations! You completed the 5-Day Streak Challenge! 🚀")
+    elif completed_tasks > 0:
+        st.info(f"Keep going! You're {completed_tasks}/5 days into the challenge! 💪")
+    else:
+        st.warning("Let's get started! Check off your first task today! 🔥")
