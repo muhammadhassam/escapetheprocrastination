@@ -16,16 +16,16 @@ except ModuleNotFoundError:
     import pyrebase  # Retry import after installation
 
 
-# Firebase Configuration
 firebase_config = {
-    "apiKey": "YOUR_FIREBASE_API_KEY",
-    "authDomain": "YOUR_PROJECT_ID.firebaseapp.com",
-    "databaseURL": "https://YOUR_PROJECT_ID.firebaseio.com",
-    "projectId": "YOUR_PROJECT_ID",
-    "storageBucket": "YOUR_PROJECT_ID.appspot.com",
-    "messagingSenderId": "YOUR_MESSAGING_SENDER_ID",
-    "appId": "YOUR_APP_ID"
+    "apiKey": "AIzaSyBk4LNNe01m35jCVWNsFcLMde51XykSGKM",
+    "authDomain": "escape-procrastination.firebaseapp.com",
+    "databaseURL": "https://escape-procrastination.firebaseio.com",
+    "projectId": "escape-procrastination",
+    "storageBucket": "escape-procrastination.appspot.com",
+    "messagingSenderId": "687402348295",
+    "appId": "1:687402348295:web:da4602785acf1cb2a59fa2"  # Replace with actual App ID from Firebase
 }
+
 
 # Initialize Firebase
 firebase = pyrebase.initialize_app(firebase_config)
