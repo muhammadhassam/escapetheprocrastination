@@ -64,6 +64,7 @@ if "user" in st.session_state:
 
     # Retrieve or Initialize User Streak Data
     user_id = st.session_state["user"]["localId"]
+    st.write(f"User ID: {user_id}")  # Debugging line to check if the user ID is correct
     user_data = db.child("streaks").child(user_id).get().val()
 
     if not user_data:
