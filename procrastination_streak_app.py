@@ -19,7 +19,7 @@ except ModuleNotFoundError:
 firebase_config = {
     "apiKey": "AIzaSyBk4LNNe01m35jCVWNsFcLMde51XykSGKM",
     "authDomain": "escape-procrastination.firebaseapp.com",
-    "databaseURL": "https://escape-procrastination.firebaseio.com",
+    "databaseURL": "https://escape-procrastination-default-rtdb.firebaseio.com/",
     "projectId": "escape-procrastination",
     "storageBucket": "escape-procrastination.appspot.com",
     "messagingSenderId": "687402348295",
