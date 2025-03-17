@@ -1,5 +1,12 @@
+import os
 import streamlit as st
-import pyrebase
+
+# Check if pyrebase4 is installed, if not, install it
+try:
+    import pyrebase
+except ModuleNotFoundError:
+    os.system("pip install pyrebase4")
+    import pyrebase  # Import again after installation
 
 # Firebase Configuration
 firebase_config = {
